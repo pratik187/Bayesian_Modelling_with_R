@@ -1,0 +1,1216 @@
+\documentclass[12pt]{article}\usepackage[]{graphicx}\usepackage[]{color}
+% maxwidth is the original width if it is less than linewidth
+% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, top = 3cm, left = 2cm, bottom = 3cm, right = 2cm]{geometry} 
+\usepackage{mathtools, amsthm, amssymb, amsbsy}
+\usepackage{float}
+\usepackage{setspace}
+\usepackage{listings}
+
+\setstretch{1.5}
+
+\title{STAT340 $-$ Project 2}
+\author{André Victor Ribeiro Amaral \\ Pratik Nag}
+\date{December 31, 2020}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+
+
+\begin{center}
+\phantom{A} \\ \vspace{5cm}
+\huge{STAT340 $-$ Project 2} \\ \vspace{24pt}
+\LARGE{André Victor Ribeiro Amaral \\ Pratik Nag} \\ \vspace{12cm}
+\large{December 31, 2020}
+\end{center}
+
+\newpage
+
+This project is based on the data set \texttt{Tokyo} from the \texttt{GMRF Book}. The details can be found on Section $4.3.4$. We will start by stating the quantities of interest.
+
+\textbf{Part 1.}
+
+The model is defined as follows
+\begin{align*}
+Y_i|X_i = x_i \sim \text{Binomial}(m = 2, ~p(x_i)), \text{ where } p(x_i) = \Phi(x_i) \text{ is the CDF of Normal(0,~1) at } x_i.
+\end{align*}
+
+In addition to that, $X_1, X_2, \cdots, X_n \sim \text{RW}2(\kappa)$, where $\kappa$ is the \textit{precision}. The prior distribution for $\kappa$ is such that $\frac{1}{\sqrt{\kappa}} \sim \text{Exponential}(\lambda = 1.55)$, which means that
+\begin{align*}
+\pi(\kappa) = 1.55 \, \exp\left(-1.55 \, \frac{1}{\sqrt{\kappa}}\right) \, \frac{1}{2 \kappa^{\frac{3}{2}}}.
+\end{align*}
+And
+\begin{align*}
+\pi(x|\kappa) \propto \kappa^{\frac{n - 1}{2}} \, \exp\left(-\frac{1}{2} \kappa \sum_{i = 1}^{n} (x_i - 2x_{i-1} + x_{i-2})^2\right),
+\end{align*}
+where $x_0 = x_n \text{ and } x_{-1} = x_{n-1}$. In matrix notation, we have $\,\pi(x|\kappa) \propto \kappa^{\frac{n - 1}{2}} \, \exp\left[-\frac{1}{2} \kappa \, (\boldsymbol{x}^{\text{T}} R \, \boldsymbol{x}) \right]$.
+
+Now, if we want to sample from $\pi(\kappa|x, y)$, we can say that, for an instant $(t)$, $\kappa_{\star}^{(t + 1)} = a \cdot \kappa^{(t)}$, such that
+\begin{align*}
+\pi(a) \propto 1 + \frac{1}{a}, \text{ for } a \in \left[\frac{1}{A}, ~A\right] \text{ and zero otherwise $-$ with } A > 0 \text{ (in particular, set } A = 2 \text{)}. 
+\end{align*}
+In this case, if $A = 2$, then $\pi(a) = \frac{1}{c}\left(1 + \frac{1}{a}\right)$, for $a \in \left[\frac{1}{2}, ~2\right]$, for $c = \frac{3}{2} + \ln(4)$. One way to sample from $\pi(a)$ is to compute $F_A^{-1}(U)$, such that $U \sim \text{Uniform}[0, 1]$. But instead of computing the exact form of $F_A^{-1}(\cdot)$, we can deal with an empirical inverse CDF, which works just fine for our case (one can do this using the \texttt{splinefun()} function; but instead, we will use the \texttt{my.scale.proposal()} implemented by Professor Rue).
+
+And then, we will accept $\kappa_{\star}$ with probability $\alpha = \min\{1, R\}$, where
+\begin{align*}
+R = \frac{\pi(\kappa_{\star}|x, y)}{\pi(\kappa|x, y)} = \frac{\pi(\kappa_{\star}) \cdot \pi(x|\kappa_{\star})}{\pi(\kappa) \cdot \pi(x|\kappa)};
+\end{align*}
+otherwise, set $\kappa_{\star}^{(t + 1)} = \kappa^{(t)}$. In practice, we will work with log-scale; i.e., $\alpha = \exp(\min\{0, \ln(R)\})$.
+
+After that, we can update $x_i$; here, we will have that
+\begin{align*}
+\pi(x_i|\boldsymbol{x}_{-i}, \kappa, y) \propto \kappa^{\frac{n - 1}{2}} \, \exp\left[-\frac{1}{2} \kappa  \, (\boldsymbol{x}^{\text{T}} R \, \boldsymbol{x}) \right] \cdot \prod_{i = 1}^{n} \Phi(x_i)^{y_i} \cdot (1 - \Phi(x_i))^{m - y_i},  ~\forall i \in \{1, \cdots, n\}.
+\end{align*}
+Notice that, conditioned on $\boldsymbol{x}_{-i}$, $\kappa$ and $y$, we can ignore the terms that does not depend on $x_i$.
+
+And then, for an instant $t$, we can say that ${x_i}_{\star}^{(t+1)} = {x_i}^{(t)} + \epsilon_i$, such that $\epsilon_i \sim \text{Normal}(0, \sigma^2)$ (say, for instance, that $\sigma^2 = 1$); i.e., ${x_i}_{\star}^{(t+1)} \sim \text{Normal}({x_i}^{(t)}, \sigma^2 = 1)$, which can be seen as the \textit{proposal kernel}.
+
+Finally, we will accept ${x_i}_{\star}$ with probability $\alpha = \exp(\min\{0, \ln(R)\})$, where
+\begin{align*}
+\ln(R) = \ln(\pi({x_i}_{\star} | \boldsymbol{x}_{-i}, \kappa, y)) - \ln(\pi({x_i} | \boldsymbol{x}_{-i}, \kappa, y));
+\end{align*}
+otherwise, ${x_i}_{\star}^{(t+1)} = {x_i}^{(t)}$
+
+\vspace{12pt}
+\textbf{IMPORTANT:} \textit{in all solutions, we will first present the code (which was previously executed). Then, based on the data set that we have generated from it, we will present the results and their interpretations.}
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{tfile} \hlkwb{=} \hlkwd{tempfile}\hlstd{()}
+\hlkwd{download.file}\hlstd{(}\hlstr{"http://hrue.r-inla-download.org/Tokyo.RData"}\hlstd{,} \hlkwc{destfile} \hlstd{= tfile)}
+\hlkwd{load}\hlstd{(tfile)}
+\hlkwd{str}\hlstd{(Tokyo)}
+\hlstd{Tokyo} \hlkwb{=} \hlstd{Tokyo[Tokyo}\hlopt{$}\hlstd{n} \hlopt{==} \hlnum{2}\hlstd{, ]}
+\hlstd{Tokyo}\hlopt{$}\hlstd{time} \hlkwb{=} \hlnum{1}\hlopt{:}\hlkwd{nrow}\hlstd{(Tokyo)}
+\hlstd{R} \hlkwb{=} \hlnum{67500} \hlopt{*} \hlkwd{toeplitz}\hlstd{(}\hlkwd{c}\hlstd{(}\hlnum{6}\hlstd{,} \hlopt{-}\hlnum{4}\hlstd{,} \hlnum{1}\hlstd{,} \hlkwd{rep}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{360}\hlstd{),} \hlnum{1}\hlstd{,} \hlopt{-}\hlnum{4}\hlstd{))}
+\hlstd{m} \hlkwb{=} \hlnum{2}
+\hlstd{n} \hlkwb{=} \hlnum{365}
+\hlstd{Y} \hlkwb{=} \hlstd{Tokyo}\hlopt{$}\hlstd{y}
+\hlstd{density_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{lambda}\hlstd{)} \hlkwd{return}\hlstd{(lambda} \hlopt{*} \hlkwd{exp}\hlstd{(}\hlopt{-}\hlstd{lambda}\hlopt{/}\hlkwd{sqrt}\hlstd{(k))} \hlopt{*} \hlstd{((k}\hlopt{^}\hlstd{(}\hlopt{-}\hlnum{3}\hlopt{/}\hlnum{2}\hlstd{))}\hlopt{/}\hlnum{2}\hlstd{))}
+\hlstd{logdensityX_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{n}\hlstd{)} \hlkwd{return}\hlstd{(}\hlnum{0.5} \hlopt{*} \hlstd{(((n} \hlopt{-} \hlnum{1}\hlstd{)} \hlopt{*} \hlkwd{log}\hlstd{(k))} \hlopt{-} \hlstd{k} \hlopt{*}
+    \hlstd{(X} \hlopt{%*%} \hlstd{(R)} \hlopt{%*%} \hlstd{X)))}
+\hlstd{a_values} \hlkwb{=} \hlkwd{seq}\hlstd{(}\hlkwc{from} \hlstd{=} \hlopt{-}\hlnum{39}\hlstd{,} \hlkwc{to} \hlstd{=} \hlnum{39}\hlstd{,} \hlkwc{by} \hlstd{=} \hlnum{0.1}\hlstd{)}
+\hlstd{density} \hlkwb{=} \hlkwd{dnorm}\hlstd{(a_values)}
+\hlstd{cumulative_density} \hlkwb{=} \hlkwd{cumsum}\hlstd{(density)}
+\hlstd{cumulative_density} \hlkwb{=} \hlstd{cumulative_density}\hlopt{/}\hlkwd{max}\hlstd{(cumulative_density)}
+\hlstd{normal_cdf} \hlkwb{=} \hlkwd{splinefun}\hlstd{(a_values, cumulative_density)}
+\hlstd{gX} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{,} \hlkwc{y}\hlstd{,} \hlkwc{mm}\hlstd{) \{}
+    \hlkwd{return}\hlstd{(y} \hlopt{*} \hlkwd{log}\hlstd{(}\hlkwd{normal_cdf}\hlstd{(x))} \hlopt{+} \hlstd{(mm} \hlopt{-} \hlstd{y)} \hlopt{*} \hlkwd{log}\hlstd{(}\hlnum{1} \hlopt{-} \hlkwd{normal_cdf}\hlstd{(x)))}
+\hlstd{\}}
+\hlstd{logDensityY_X} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{,} \hlkwc{y}\hlstd{,} \hlkwc{m}\hlstd{)} \hlkwd{return}\hlstd{(}\hlkwd{sum}\hlstd{(}\hlkwd{gX}\hlstd{(x, y, m)))}
+\hlstd{my.scale.proposal} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{n}\hlstd{,} \hlkwc{F} \hlstd{=} \hlnum{2}\hlstd{) \{}
+    \hlstd{x} \hlkwb{<-} \hlkwd{numeric}\hlstd{(n)}
+    \hlkwa{if} \hlstd{(F} \hlopt{<} \hlnum{1}\hlstd{)}
+        \hlstd{F} \hlkwb{=} \hlnum{1}\hlopt{/}\hlstd{F}
+    \hlkwa{if} \hlstd{(F} \hlopt{==} \hlnum{1}\hlstd{) \{}
+        \hlstd{x[]} \hlkwb{<-} \hlnum{1}
+    \hlstd{\}} \hlkwa{else} \hlstd{\{}
+        \hlstd{len} \hlkwb{=} \hlstd{F} \hlopt{-} \hlnum{1}\hlopt{/}\hlstd{F}
+        \hlstd{unif} \hlkwb{=} \hlstd{(}\hlkwd{runif}\hlstd{(n)} \hlopt{<} \hlstd{len}\hlopt{/}\hlstd{(len} \hlopt{+} \hlnum{2} \hlopt{*} \hlkwd{log}\hlstd{(F)))}
+        \hlstd{m} \hlkwb{<-} \hlkwd{sum}\hlstd{(unif)}
+        \hlstd{x[unif]} \hlkwb{<-} \hlkwd{runif}\hlstd{(m,} \hlkwc{min} \hlstd{=} \hlnum{1}\hlopt{/}\hlstd{F,} \hlkwc{max} \hlstd{= F)}
+        \hlstd{x[}\hlopt{!}\hlstd{unif]} \hlkwb{<-} \hlstd{F}\hlopt{^}\hlkwd{runif}\hlstd{(n} \hlopt{-} \hlstd{m,} \hlkwc{min} \hlstd{=} \hlopt{-}\hlnum{1}\hlstd{,} \hlkwc{max} \hlstd{=} \hlnum{1}\hlstd{)}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(x)}
+\hlstd{\}}
+\hlstd{main} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{Y}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{m}\hlstd{,} \hlkwc{n}\hlstd{) \{}
+    \hlstd{value} \hlkwb{=} \hlnum{TRUE}
+    \hlstd{count} \hlkwb{=} \hlnum{0}
+    \hlstd{p1} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p2} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p3} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{k_iter} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlkwa{while} \hlstd{(value) \{}
+        \hlstd{k_old} \hlkwb{=} \hlstd{k}
+        \hlstd{k_new} \hlkwb{=} \hlkwd{my.scale.proposal}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{F} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{*} \hlstd{k}
+        \hlstd{k_new_posterior} \hlkwb{=} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k_new,} \hlnum{1.55}\hlstd{))} \hlopt{+} \hlkwd{logdensityX_k}\hlstd{(k_new,}
+            \hlstd{X, R, n)}
+        \hlstd{k_posterior} \hlkwb{=} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k,} \hlnum{1.55}\hlstd{))} \hlopt{+} \hlkwd{logdensityX_k}\hlstd{(k, X, R, n)}
+        \hlstd{logR} \hlkwb{=} \hlstd{k_new_posterior} \hlopt{-} \hlstd{k_posterior}
+        \hlstd{a} \hlkwb{=} \hlkwd{exp}\hlstd{(}\hlkwd{min}\hlstd{(}\hlnum{0}\hlstd{, logR))}
+        \hlkwa{if} \hlstd{(}\hlkwd{runif}\hlstd{(}\hlnum{1}\hlstd{)} \hlopt{<} \hlstd{a)}
+            \hlstd{k} \hlkwb{=} \hlstd{k_new}
+        \hlstd{X_new} \hlkwb{=} \hlstd{X}
+        \hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+            \hlstd{X_old} \hlkwb{=} \hlstd{X}
+            \hlstd{x_new} \hlkwb{=} \hlstd{X_old[i]} \hlopt{+} \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{mean} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{sd} \hlstd{=} \hlnum{1}\hlstd{)}
+            \hlstd{x_old} \hlkwb{=} \hlstd{X_old[i]}
+            \hlstd{X_posterior} \hlkwb{=} \hlkwd{logdensityX_k}\hlstd{(k, X_old, R, n)} \hlopt{+} \hlkwd{logDensityY_X}\hlstd{(x_old,}
+                \hlstd{Y[i], m)}
+            \hlstd{X_old[i]} \hlkwb{=} \hlstd{x_new}
+            \hlstd{X_new_posterior} \hlkwb{=} \hlkwd{logdensityX_k}\hlstd{(k, X_old, R, n)} \hlopt{+} \hlkwd{logDensityY_X}\hlstd{(x_new,}
+                \hlstd{Y[i], m)}
+            \hlstd{logR} \hlkwb{=} \hlstd{X_new_posterior} \hlopt{-} \hlstd{X_posterior}
+            \hlstd{a} \hlkwb{=} \hlkwd{exp}\hlstd{(}\hlkwd{min}\hlstd{(}\hlnum{0}\hlstd{, logR))}
+            \hlkwa{if} \hlstd{(}\hlkwd{runif}\hlstd{(}\hlnum{1}\hlstd{)} \hlopt{<} \hlstd{a)}
+                \hlstd{X_new[i]} \hlkwb{=} \hlstd{x_new}
+        \hlstd{\}}
+        \hlstd{X} \hlkwb{=} \hlstd{X_new}
+        \hlstd{p1} \hlkwb{=} \hlkwd{append}\hlstd{(p1, X[}\hlnum{130}\hlstd{])}
+        \hlstd{p2} \hlkwb{=} \hlkwd{append}\hlstd{(p2, X[}\hlnum{3}\hlstd{])}
+        \hlstd{p3} \hlkwb{=} \hlkwd{append}\hlstd{(p3, X[}\hlnum{300}\hlstd{])}
+        \hlstd{k_iter} \hlkwb{=} \hlkwd{append}\hlstd{(k_iter, k)}
+        \hlstd{count} \hlkwb{=} \hlstd{count} \hlopt{+} \hlnum{1}
+        \hlkwa{if} \hlstd{(count} \hlopt{>=} \hlnum{10000}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final} \hlopt{+} \hlstd{X}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final} \hlopt{+} \hlstd{k}
+        \hlstd{\}} \hlkwa{else} \hlstd{\{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k}
+        \hlstd{\}}
+        \hlkwa{if} \hlstd{(count} \hlopt{==} \hlnum{50000}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final}\hlopt{/}\hlnum{40000}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final}\hlopt{/}\hlnum{40000}
+            \hlkwa{break}
+        \hlstd{\}}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{x130} \hlstd{= p1,} \hlkwc{x3} \hlstd{= p2,} \hlkwc{x300} \hlstd{= p3,} \hlkwc{k} \hlstd{= k_final,} \hlkwc{X} \hlstd{= X_final,}
+        \hlkwc{k_iter} \hlstd{= k_iter))}
+\hlstd{\}}
+\hlstd{X} \hlkwb{=} \hlkwd{runif}\hlstd{(n)}
+\hlstd{k} \hlkwb{=} \hlnum{1}
+\hlstd{U} \hlkwb{=} \hlkwd{main}\hlstd{(k, X, Y, R, m, n)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+In order to keep the consistency among the results, we will always consider the average of the posterior sample, with some burn-in, for all $365$ \textit{timepoints}, and we will also check the sample from the $3^{\text{rd}}$, $130^{\text{th}}$ and $300^{\text{th}}$ days.
+
+So now, we can load and analyze our results.
+
+Let's start with the estimated probability of rainfall along the $365$ days, based on the estimated $x_i$, for $i \in \{1, 2, \cdots, 365\}$, with a burn-in of size $10,000$ (out of $50,000$ observations).
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{load}\hlstd{(}\hlstr{"data/problem1.Rdata"}\hlstd{)}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{plot}\hlstd{(}\hlkwd{pnorm}\hlstd{(U}\hlopt{$}\hlstd{X),} \hlkwc{type} \hlstd{=} \hlstr{"l"}\hlstd{,} \hlkwc{ylim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{1}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlstr{"Days"}\hlstd{,} \hlkwc{ylab} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlkwd{p}\hlstd{(x[i])),}
+    \hlkwc{main} \hlstd{=} \hlstr{"Estimated underlying probability of rainfall #1"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-3-1} 
+
+}
+
+
+
+\end{knitrout}
+
+Now, let's take a look at three particular days, and plot the sample we have obtained from them.
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x3,} \hlnum{40000}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{3}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{20}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{3}\hlstd{]} \hlopt{*} \hlstr{" (#1)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-4-1} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x130,} \hlnum{40000}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{130}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{20}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{130}\hlstd{]} \hlopt{*} \hlstr{" (#1)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-4-2} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x300,} \hlnum{40000}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{300}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{20}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{300}\hlstd{]} \hlopt{*} \hlstr{" (#1)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-4-3} 
+
+}
+
+
+
+\end{knitrout}
+
+For reference, the data set that we used to generate these plot is in \texttt{/data/problem1.RData}.
+
+\textbf{Remark:} Although in the code we are showing that we have iterated through the loop $50,000$ times, if we wanted better results, we were supposed to run it for a longer time; i.e., we had to stop it earlier due to the ``slow'' running time. As a consequence of it, and since we did not expect a rapid convergence for this (and the next one) sampler, the results obtained for this ``Part 1'' (as well as ``Part 2'') are not reliable. From sampler \#3 on, the results are much more accurate, though.
+
+\newpage
+
+\textbf{Part 2.}
+
+In this second part, the difference from what we have done so far depends on an approximation for $\pi(x_i|\boldsymbol{x}_{-i}, \kappa, y)$, such that it is normally distributed. To do this, we have to approximate the term $\pi(y_i|x_i)$ in a way that it can be written as a polynomial in $x_i$. Start by recalling that 
+\begin{align*}
+\pi(x_i|\boldsymbol{x}_{-i}, \kappa, y) \propto \exp\left[-\frac{1}{2} \kappa  \, (a_i {x_i}^2 + b_i x_i) \right] \cdot \Phi(x_i)^{y_i} \cdot (1 - \Phi(x_i))^{m - y_i}.
+\end{align*}
+Now, take the log of it. 
+\begin{align}
+\label{ln-eq}
+\ln \pi(x_i|\boldsymbol{x}_{-i}, \kappa, y) \propto -\frac{1}{2} \kappa  \, (a_i {x_i}^2 + b_i x_i) +  \left[y_i \ln(\Phi(x_i)) + (m - y_i) \ln(1 - \Phi(x_i))\right].
+\end{align}
+Then, let $g(x_i) = y_i \ln(\Phi(x_i)) + (m - y_i) \ln(1 - \Phi(x_i))$ and write the Taylor's expansion of $g(x_i)$ around ${x_i}^{\star}$ in the following way
+\begin{align*}
+g(x_i) &\approx g({x_i}^{\star}) + g^{\prime}({x_i}^{\star})(x_i - {x_i}^{\star}) + \frac{1}{2} \, g^{\prime\prime}({x_i}^{\star}) (x_i - {x_i}^{\star})^2 \\
+       &\approx  g^{\prime}({x_i}^{\star})(x_i - {x_i}^{\star}) + \frac{1}{2} \, g^{\prime\prime}({x_i}^{\star}) (x_i - {x_i}^{\star})^2 \\
+       &= a_i^{\prime}x_i - a_i^{\prime}{x_i}^{\star} + \frac{1}{2}\,(a_i^{\prime\prime}{x_i}^2 - 2a_i^{\prime\prime}x_i {x_i}^{\star} + a_i^{\prime\prime}{{x_i}^{\star}}^2), \text{ where } a_i^{(k)} = g^{(k)}({x_i}^{\star}) \text{ for } k \in \{1, 2\} \\
+       &\approx a_i^{\prime}x_i  + \frac{1}{2}\,(a_i^{\prime\prime}{x_i}^2 - 2a_i^{\prime\prime}x_i {x_i}^{\star}) \\
+       &=\frac{1}{2}\left[a_i^{\prime\prime}{x_i}^2 + 2(a_i^{\prime} - a_i^{\prime\prime}{x_i}^{\star}) x_i\right] \\
+       &=-\frac{1}{2}(c_i {x_i}^2 + d_i x_i), \text{ where } c_i = -{a}^{\prime\prime}_i \text{ and } d_i = -2(a_i^{\prime} - a_i^{\prime\prime}{x_i}^{\star}). 
+\end{align*}
+Thus, using the above approximation for $g(x_i)$, we can re-write Equation \eqref{ln-eq}.
+\begin{align*}
+\ln \pi_{\text{G}}(x_i|\boldsymbol{x}_{-i}, \kappa, y) &\propto -\frac{1}{2}\, \kappa  \, (a_i {x_i}^2 + b_i x_i) -\frac{1}{2}\,\kappa\left(\frac{c_i {x_i}^2 + d_i x_i}{\kappa}\right) \\
+                                            &= -\frac{1}{2}\,\kappa\left[{x_i}^2\left(a_i + \frac{c_i}{\kappa}\right) + x_i \left(b_i + \frac{d_i}{\kappa}\right) \right].
+\end{align*}
+Implying that
+\begin{align}
+\label{approx-normal}
+\pi_{\text{G}}(x_i|\boldsymbol{x}_{-i}, \kappa, y) &\propto \exp\left\{-\frac{1}{2}\,\kappa\left[{x_i}^2\left(a_i + \frac{c_i}{\kappa}\right) + x_i \left(b_i + \frac{d_i}{\kappa}\right) \right]\right\},
+\end{align}
+which can be viewed as the core of a Normal distribution.
+
+For a vector $\boldsymbol{x}$, we can re-write Equation \eqref{approx-normal} in a matrix notation as
+\begin{align}
+\label{matrix-notation-approx-normal}
+\pi_{\text{G}}(\boldsymbol{x}|\kappa, y) \propto \exp\left\{-\frac{1}{2} \boldsymbol{x}^{\text{T}} \left[\kappa \, R + \text{diag}(\boldsymbol{c})\right]\,\boldsymbol{x} + \boldsymbol{d}^{\text{T}}\boldsymbol{x}\right\}
+\end{align}
+where $\boldsymbol{x}|\kappa, y \sim \mathcal{N}_C(\boldsymbol{c}, \kappa\,R + \text{diag}(\boldsymbol{c}))$.
+
+And then, we can compute the acceptance rate for ${x_i}_{\star}$, such that ${x_i}_{\star} \sim \pi_{\text{G}}(x_i|\boldsymbol{x}_{-i}, \kappa, y)$, in the following way
+\begin{align*}
+\ln(R) &= \ln(\pi({x_i}_{\star} | \boldsymbol{x}_{-i}, \kappa, y)) +  \ln(\pi_{\text{G}}({x_i} | \boldsymbol{x}_{-i}, {x_i}_{\star}, \kappa, y)) \\
+&- \ln(\pi({x_i} | \boldsymbol{x}_{-i}, \kappa, y)) - \ln(\pi_{\text{G}}({x_i}_{\star} | {\boldsymbol{x}_{-i}}_{\star}, x_i, \kappa, y)).
+\end{align*}
+
+From a practical point of view, there are some additional details that we have to consider; for instance, we can compute $g^{\prime}({x_i}^{\star})$ and $g^{\prime\prime}({x_i}^{\star})$ numerically (e.g., using the \texttt{numDeriv} package) $-$ without having to find an analytic solution for it. Additionally, for a fixed $x_i$, we have to optimize $g(x_i) = g(x_i, {x_i}^{\star})$ for ${x_i}^{\star}$; this can also be done by setting ${x_i}^{\star}$ equal to the previous mean of $\pi_{\text{G}}(\boldsymbol{x}|\kappa, y)$, which is the approach that we will take here.
+
+Finally, taking these changes into account, we can implement our \textit{single site sampler with a Gaussian-approximation proposal for the spline} in a similar way to what we have done for ``Part 1.''.
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(numDeriv)}
+\hlstd{density_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{lambda}\hlstd{)} \hlkwd{return}\hlstd{(lambda} \hlopt{*} \hlkwd{exp}\hlstd{(}\hlopt{-}\hlstd{lambda}\hlopt{/}\hlkwd{sqrt}\hlstd{(k))} \hlopt{*} \hlstd{((k}\hlopt{^}\hlstd{(}\hlopt{-}\hlnum{3}\hlopt{/}\hlnum{2}\hlstd{))}\hlopt{/}\hlnum{2}\hlstd{))}
+\hlstd{logdensityX_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{n}\hlstd{)} \hlkwd{return}\hlstd{(}\hlnum{0.5} \hlopt{*} \hlstd{(((n} \hlopt{-} \hlnum{1}\hlstd{)} \hlopt{*} \hlkwd{log}\hlstd{(k))} \hlopt{-} \hlstd{k} \hlopt{*}
+    \hlstd{(X} \hlopt{%*%} \hlstd{(R)} \hlopt{%*%} \hlstd{X)))}
+\hlstd{logdensityX} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{X}\hlstd{,} \hlkwc{k}\hlstd{,} \hlkwc{index}\hlstd{) \{}
+    \hlkwa{if} \hlstd{(index} \hlopt{==} \hlnum{2}\hlstd{) \{}
+        \hlstd{e} \hlkwb{=} \hlstd{(}\hlnum{6} \hlopt{*} \hlstd{X[index]}\hlopt{^}\hlnum{2}\hlstd{)} \hlopt{+} \hlstd{(}\hlnum{2} \hlopt{*} \hlstd{X[n]} \hlopt{-} \hlnum{8} \hlopt{*} \hlstd{X[index} \hlopt{-} \hlnum{1}\hlstd{])} \hlopt{*} \hlstd{X[index]}
+    \hlstd{\}} \hlkwa{else if} \hlstd{(index} \hlopt{==} \hlnum{1}\hlstd{) \{}
+        \hlstd{e} \hlkwb{=} \hlstd{(}\hlnum{6} \hlopt{*} \hlstd{X[index]}\hlopt{^}\hlnum{2}\hlstd{)} \hlopt{+} \hlstd{(}\hlnum{2} \hlopt{*} \hlstd{X[n} \hlopt{-} \hlnum{1}\hlstd{]} \hlopt{-} \hlnum{8} \hlopt{*} \hlstd{X[n])} \hlopt{*} \hlstd{X[index]}
+    \hlstd{\}} \hlkwa{else} \hlstd{\{}
+        \hlstd{e} \hlkwb{=} \hlstd{(}\hlnum{6} \hlopt{*} \hlstd{X[index]}\hlopt{^}\hlnum{2}\hlstd{)} \hlopt{+} \hlstd{(}\hlnum{2} \hlopt{*} \hlstd{X[index} \hlopt{-} \hlnum{2}\hlstd{]} \hlopt{-} \hlnum{8} \hlopt{*} \hlstd{X[index} \hlopt{-} \hlnum{1}\hlstd{])} \hlopt{*} \hlstd{X[index]}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlopt{-}\hlnum{0.5} \hlopt{*} \hlstd{k} \hlopt{*} \hlstd{e} \hlopt{*} \hlnum{67500}\hlstd{)}
+\hlstd{\}}
+\hlstd{a_values} \hlkwb{=} \hlkwd{seq}\hlstd{(}\hlkwc{from} \hlstd{=} \hlopt{-}\hlnum{39}\hlstd{,} \hlkwc{to} \hlstd{=} \hlnum{39}\hlstd{,} \hlkwc{by} \hlstd{=} \hlnum{0.1}\hlstd{)}
+\hlstd{density} \hlkwb{=} \hlkwd{dnorm}\hlstd{(a_values)}
+\hlstd{cumulative_density} \hlkwb{=} \hlkwd{cumsum}\hlstd{(density)}
+\hlstd{cumulative_density} \hlkwb{=} \hlstd{cumulative_density}\hlopt{/}\hlkwd{max}\hlstd{(cumulative_density)}
+\hlstd{normal_cdf} \hlkwb{=} \hlkwd{splinefun}\hlstd{(a_values, cumulative_density)}
+\hlstd{gX} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{,} \hlkwc{y}\hlstd{,} \hlkwc{mm}\hlstd{) \{}
+    \hlkwd{return}\hlstd{(y} \hlopt{*} \hlkwd{log}\hlstd{(}\hlkwd{normal_cdf}\hlstd{(x))} \hlopt{+} \hlstd{(mm} \hlopt{-} \hlstd{y)} \hlopt{*} \hlkwd{log}\hlstd{(}\hlnum{1} \hlopt{-} \hlkwd{normal_cdf}\hlstd{(x)))}
+\hlstd{\}}
+\hlstd{b_coefficient} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{X}\hlstd{,} \hlkwc{index}\hlstd{) \{}
+    \hlkwa{if} \hlstd{(index} \hlopt{==} \hlnum{2}\hlstd{)}
+        \hlstd{e} \hlkwb{=} \hlstd{(}\hlnum{2} \hlopt{*} \hlstd{X[n]} \hlopt{-} \hlnum{8} \hlopt{*} \hlstd{X[index} \hlopt{-} \hlnum{1}\hlstd{])} \hlkwa{else if} \hlstd{(index} \hlopt{==} \hlnum{1}\hlstd{)}
+        \hlstd{e} \hlkwb{=} \hlstd{(}\hlnum{2} \hlopt{*} \hlstd{X[n} \hlopt{-} \hlnum{1}\hlstd{]} \hlopt{-} \hlnum{8} \hlopt{*} \hlstd{X[n])} \hlkwa{else} \hlstd{e} \hlkwb{=} \hlstd{(}\hlnum{2} \hlopt{*} \hlstd{X[index} \hlopt{-} \hlnum{2}\hlstd{]} \hlopt{-} \hlnum{8} \hlopt{*} \hlstd{X[index} \hlopt{-} \hlnum{1}\hlstd{])}
+    \hlkwd{return}\hlstd{(e)}
+\hlstd{\}}
+\hlstd{gausian_approx} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{y}\hlstd{,} \hlkwc{m}\hlstd{,} \hlkwc{n}\hlstd{,} \hlkwc{index}\hlstd{) \{}
+    \hlstd{x_old} \hlkwb{=} \hlstd{X[index]}
+    \hlstd{single_deriv} \hlkwb{=} \hlkwd{grad}\hlstd{(gX,} \hlkwc{x} \hlstd{= X[index],} \hlkwc{y} \hlstd{= y,} \hlkwc{mm} \hlstd{= m)}
+    \hlstd{double_deriv} \hlkwb{=} \hlkwd{drop}\hlstd{(}\hlkwd{hessian}\hlstd{(gX,} \hlkwc{x} \hlstd{= X[index],} \hlkwc{y} \hlstd{= y,} \hlkwc{mm} \hlstd{= m))}
+    \hlstd{r} \hlkwb{=} \hlstd{k} \hlopt{*} \hlnum{6} \hlopt{-} \hlstd{double_deriv}
+    \hlstd{b} \hlkwb{=} \hlstd{k} \hlopt{*} \hlkwd{b_coefficient}\hlstd{(X, index)} \hlopt{+} \hlstd{single_deriv} \hlopt{-} \hlstd{double_deriv} \hlopt{*} \hlstd{X[index]}
+    \hlstd{mean} \hlkwb{=} \hlstd{b}\hlopt{/}\hlstd{r}
+    \hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+        \hlkwa{if} \hlstd{(mean} \hlopt{< -}\hlnum{20} \hlopt{||} \hlstd{mean} \hlopt{>} \hlnum{7}\hlstd{)}
+            \hlstd{mean} \hlkwb{=} \hlstd{x_old}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{X_star} \hlstd{= mean,} \hlkwc{variance} \hlstd{= (}\hlnum{1}\hlopt{/}\hlstd{r)))}
+\hlstd{\}}
+\hlstd{main} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{Y}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{m}\hlstd{,} \hlkwc{n}\hlstd{) \{}
+    \hlstd{value} \hlkwb{=} \hlnum{TRUE}
+    \hlstd{count} \hlkwb{=} \hlnum{0}
+    \hlstd{p1} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p2} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p3} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlkwa{while} \hlstd{(value) \{}
+        \hlstd{k_old} \hlkwb{=} \hlstd{k}
+        \hlstd{k_new} \hlkwb{=} \hlkwd{my.scale.proposal}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{F} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{*} \hlstd{k}
+        \hlstd{k_new_posterior} \hlkwb{=} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k_new,} \hlnum{1.55}\hlstd{))} \hlopt{+} \hlkwd{logdensityX_k}\hlstd{(k_new,}
+            \hlstd{X, R, n)}
+        \hlstd{k_posterior} \hlkwb{=} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k,} \hlnum{1.55}\hlstd{))} \hlopt{+} \hlkwd{logdensityX_k}\hlstd{(k, X, R, n)}
+        \hlstd{logR} \hlkwb{=} \hlstd{k_new_posterior} \hlopt{-} \hlstd{k_posterior}
+        \hlstd{a} \hlkwb{=} \hlkwd{exp}\hlstd{(}\hlkwd{min}\hlstd{(}\hlnum{0}\hlstd{, logR))}
+        \hlkwa{if} \hlstd{(}\hlkwd{runif}\hlstd{(}\hlnum{1}\hlstd{)} \hlopt{<} \hlstd{a)}
+            \hlstd{k} \hlkwb{=} \hlstd{k_new}
+        \hlstd{X_new} \hlkwb{=} \hlstd{X}
+        \hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+            \hlcom{# density x_old}
+            \hlstd{X_} \hlkwb{=} \hlstd{X}
+            \hlstd{X_oldDensity} \hlkwb{=} \hlkwd{logdensityX}\hlstd{(X, k, i)} \hlopt{+} \hlkwd{gX}\hlstd{(X[i], Y[i], m)}
+            \hlstd{gausianApprox} \hlkwb{=} \hlkwd{gausian_approx}\hlstd{(k, X, Y[i], m, n, i)}
+            \hlstd{x_new1} \hlkwb{=} \hlkwd{rnorm}\hlstd{(}\hlnum{1}\hlstd{, gausianApprox}\hlopt{$}\hlstd{X_star,} \hlkwd{sqrt}\hlstd{(gausianApprox}\hlopt{$}\hlstd{variance))}
+            \hlstd{X_[i]} \hlkwb{=} \hlstd{x_new1}
+            \hlstd{gausianApprox_new} \hlkwb{=} \hlkwd{gausian_approx}\hlstd{(k, X_, Y[i], m, n, i)}
+            \hlcom{# density of x_old gaussian approximation}
+            \hlstd{X_old_Gausian} \hlkwb{=} \hlstd{(}\hlopt{-}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{((X} \hlopt{-} \hlstd{gausianApprox_new}\hlopt{$}\hlstd{X_star)}\hlopt{^}\hlnum{2}\hlstd{)}\hlopt{/}\hlstd{gausianApprox_new}\hlopt{$}\hlstd{variance}
+            \hlcom{# density x_new}
+            \hlstd{X_newDensity} \hlkwb{=} \hlkwd{logdensityX}\hlstd{(X_, k, i)} \hlopt{+} \hlkwd{gX}\hlstd{(X_[i], Y[i], m)}
+            \hlcom{# density of x_new gausian approximation}
+            \hlstd{X_new_Gausian} \hlkwb{=} \hlstd{(}\hlopt{-}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{((X_} \hlopt{-} \hlstd{gausianApprox}\hlopt{$}\hlstd{X_star)}\hlopt{^}\hlnum{2}\hlstd{)}\hlopt{/}\hlstd{gausianApprox}\hlopt{$}\hlstd{variance}
+            \hlstd{logR} \hlkwb{=} \hlstd{X_newDensity} \hlopt{-} \hlstd{X_oldDensity} \hlopt{+} \hlstd{X_old_Gausian} \hlopt{-} \hlstd{X_new_Gausian}
+            \hlstd{a} \hlkwb{=} \hlkwd{exp}\hlstd{(}\hlkwd{min}\hlstd{(}\hlnum{0}\hlstd{, logR))}
+            \hlkwa{if} \hlstd{(}\hlkwd{runif}\hlstd{(}\hlnum{1}\hlstd{)} \hlopt{<} \hlstd{a)}
+                \hlstd{X_new[i]} \hlkwb{=} \hlstd{x_new1}
+        \hlstd{\}}
+        \hlstd{X} \hlkwb{=} \hlstd{X_new}
+        \hlstd{p1} \hlkwb{=} \hlkwd{append}\hlstd{(p1, X[}\hlnum{130}\hlstd{])}
+        \hlstd{p2} \hlkwb{=} \hlkwd{append}\hlstd{(p2, X[}\hlnum{3}\hlstd{])}
+        \hlstd{p3} \hlkwb{=} \hlkwd{append}\hlstd{(p3, X[}\hlnum{300}\hlstd{])}
+        \hlstd{count} \hlkwb{=} \hlstd{count} \hlopt{+} \hlnum{1}
+        \hlkwa{if} \hlstd{(count} \hlopt{>=} \hlnum{10000}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final} \hlopt{+} \hlstd{X}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final} \hlopt{+} \hlstd{k}
+        \hlstd{\}} \hlkwa{else} \hlstd{\{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k}
+        \hlstd{\}}
+        \hlkwa{if} \hlstd{(count} \hlopt{==} \hlnum{50000}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final}\hlopt{/}\hlnum{40000}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final}\hlopt{/}\hlnum{40000}
+            \hlkwa{break}
+        \hlstd{\}}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{x130} \hlstd{= p1,} \hlkwc{x3} \hlstd{= p2,} \hlkwc{x300} \hlstd{= p3,} \hlkwc{k} \hlstd{= k_final,} \hlkwc{X} \hlstd{= X_final))}
+\hlstd{\}}
+\hlstd{X} \hlkwb{=} \hlkwd{runif}\hlstd{(n,} \hlnum{3}\hlstd{,} \hlnum{5}\hlstd{)}
+\hlstd{k} \hlkwb{=} \hlnum{0.5}
+\hlstd{U} \hlkwb{=} \hlkwd{main}\hlstd{(k, X, Y, R, m, n)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Now, we can load and analyze our results.
+
+Let's start with the estimated probability of rainfall along the $365$ days, based on the estimated $x_i$, for $i \in \{1, 2, \cdots, 365\}$, with a burn-in of size $10,000$ (out of $50,000$ observations).
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{load}\hlstd{(}\hlstr{"data/problem2.Rdata"}\hlstd{)}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{plot}\hlstd{(}\hlkwd{pnorm}\hlstd{(U}\hlopt{$}\hlstd{X),} \hlkwc{type} \hlstd{=} \hlstr{"l"}\hlstd{,} \hlkwc{ylim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{1}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlstr{"Days"}\hlstd{,} \hlkwc{ylab} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlkwd{p}\hlstd{(x[i])),}
+    \hlkwc{main} \hlstd{=} \hlstr{"Estimated underlying probability of rainfall #2"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-6-1} 
+
+}
+
+
+
+\end{knitrout}
+
+Now, let's take a look at three particular days, and plot the sample we have obtained from them.
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x3,} \hlnum{40000}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{3}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{50}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{3}\hlstd{]} \hlopt{*} \hlstr{" (#2)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-7-1} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x130,} \hlnum{40000}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{130}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{50}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{130}\hlstd{]} \hlopt{*} \hlstr{" (#2)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-7-2} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x300,} \hlnum{40000}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{300}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{50}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{300}\hlstd{]} \hlopt{*} \hlstr{" (#2)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-7-3} 
+
+}
+
+
+
+\end{knitrout}
+
+For reference, the data set that we used to generate these plot is in \texttt{/data/problem2.RData}.
+
+\vspace{12pt}
+
+\textbf{Remark:} Similarly to ``Part 1'', the slow convergence rate that we have observed in this sampler, and the ``low'' number of iterations that we used here, do \textbf{not} give us reliable results.
+
+\newpage
+
+\textbf{Part 3.}
+
+This third part will use most of what we have developed for ``Part 2''. However, instead of working with Equation \eqref{approx-normal}, as before, we will sample $\boldsymbol{x}_{\star}$ from Equation \eqref{matrix-notation-approx-normal}, meaning that, for some accepted $\kappa_{\star}$, we will updated all values of $x_i$, for $i \in \{1, \cdots, 365\}$, at once. Here, notice that we still have to go through the procedure of accepting $\kappa_{\star}$ with probability $\alpha$ $-$ it will not be the case for ``Part 4.''.
+
+Then, in a very similar way as we have done before, we can compute
+\begin{align*}
+\ln(R) = \ln(\pi({\boldsymbol{x}}_{\star} | \kappa, y)) +  \ln(\pi_{\text{G}}(\boldsymbol{x} | \boldsymbol{x}_{\star}, \kappa, y)) - \ln(\pi(\boldsymbol{x} | \kappa, y)) - \ln(\pi_{\text{G}}({\boldsymbol{x}}_{\star} | \boldsymbol{x}, \kappa, y)).
+\end{align*}
+
+Finally, we can implement the code, which will be very similar to the ``Part 2.'' solution.
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(numDeriv)}
+\hlstd{density_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{lambda}\hlstd{)} \hlkwd{return}\hlstd{(lambda} \hlopt{*} \hlkwd{exp}\hlstd{(}\hlopt{-}\hlstd{lambda}\hlopt{/}\hlkwd{sqrt}\hlstd{(k))} \hlopt{*} \hlstd{((k}\hlopt{^}\hlstd{(}\hlopt{-}\hlnum{3}\hlopt{/}\hlnum{2}\hlstd{))}\hlopt{/}\hlnum{2}\hlstd{))}
+\hlstd{logdensityX_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{n}\hlstd{)} \hlkwd{return}\hlstd{(}\hlnum{0.5} \hlopt{*} \hlstd{(((n} \hlopt{-} \hlnum{1}\hlstd{)} \hlopt{*} \hlkwd{log}\hlstd{(k))} \hlopt{-} \hlstd{k} \hlopt{*}
+    \hlstd{(X} \hlopt{%*%} \hlstd{(R)} \hlopt{%*%} \hlstd{X)))}
+\hlstd{logX_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{X}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{n}\hlstd{)} \hlkwd{return}\hlstd{((}\hlopt{-}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{(X} \hlopt{%*%} \hlstd{(R)} \hlopt{%*%} \hlstd{X))}
+\hlstd{a_values} \hlkwb{=} \hlkwd{seq}\hlstd{(}\hlkwc{from} \hlstd{=} \hlopt{-}\hlnum{39}\hlstd{,} \hlkwc{to} \hlstd{=} \hlnum{39}\hlstd{,} \hlkwc{by} \hlstd{=} \hlnum{0.1}\hlstd{)}
+\hlstd{density} \hlkwb{=} \hlkwd{dnorm}\hlstd{(a_values)}
+\hlstd{cumulative_density} \hlkwb{=} \hlkwd{cumsum}\hlstd{(density)}
+\hlstd{cumulative_density} \hlkwb{=} \hlstd{cumulative_density}\hlopt{/}\hlkwd{max}\hlstd{(cumulative_density)}
+\hlstd{normal_cdf} \hlkwb{=} \hlkwd{splinefun}\hlstd{(a_values, cumulative_density)}
+\hlstd{gX} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{,} \hlkwc{y}\hlstd{,} \hlkwc{mm}\hlstd{) \{}
+    \hlkwd{return}\hlstd{(y} \hlopt{*} \hlkwd{log}\hlstd{(}\hlkwd{normal_cdf}\hlstd{(x))} \hlopt{+} \hlstd{(mm} \hlopt{-} \hlstd{y)} \hlopt{*} \hlkwd{log}\hlstd{(}\hlnum{1} \hlopt{-} \hlkwd{normal_cdf}\hlstd{(x)))}
+\hlstd{\}}
+\hlstd{logDensityY_X} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{,} \hlkwc{y}\hlstd{,} \hlkwc{m}\hlstd{)} \hlkwd{return}\hlstd{(}\hlkwd{sum}\hlstd{(}\hlkwd{gX}\hlstd{(x, y, m)))}
+\hlstd{gausian_approx} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X_star}\hlstd{,} \hlkwc{Y}\hlstd{,} \hlkwc{m}\hlstd{,} \hlkwc{n}\hlstd{) \{}
+    \hlstd{single_deriv} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlnum{NA}\hlstd{, n)}
+    \hlstd{double_deriv} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlnum{NA}\hlstd{, n)}
+    \hlstd{X_star_old} \hlkwb{=} \hlstd{X_star}
+    \hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+        \hlstd{single_deriv[i]} \hlkwb{=} \hlkwd{grad}\hlstd{(gX,} \hlkwc{x} \hlstd{= X_star[i],} \hlkwc{y} \hlstd{= Y[i],} \hlkwc{mm} \hlstd{= m)}
+        \hlstd{double_deriv[i]} \hlkwb{=} \hlkwd{drop}\hlstd{(}\hlkwd{hessian}\hlstd{(gX,} \hlkwc{x} \hlstd{= X_star[i],} \hlkwc{y} \hlstd{= Y[i],} \hlkwc{mm} \hlstd{= m))}
+    \hlstd{\}}
+    \hlstd{double_deriv_matrix} \hlkwb{=} \hlkwd{diag}\hlstd{((}\hlopt{-}\hlnum{1}\hlstd{)} \hlopt{*} \hlstd{double_deriv)}
+    \hlstd{R_} \hlkwb{=} \hlstd{k} \hlopt{*} \hlstd{R} \hlopt{+} \hlstd{double_deriv_matrix}
+    \hlstd{b} \hlkwb{=} \hlstd{(single_deriv} \hlopt{-} \hlstd{(double_deriv} \hlopt{*} \hlstd{X_star))}
+    \hlstd{L} \hlkwb{=} \hlkwd{t}\hlstd{(}\hlkwd{chol}\hlstd{(R_))}
+    \hlstd{X_star} \hlkwb{=} \hlkwd{backsolve}\hlstd{(}\hlkwd{t}\hlstd{(L),} \hlkwd{forwardsolve}\hlstd{(L, b))}
+    \hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+        \hlkwa{if} \hlstd{(X_star[i]} \hlopt{< -}\hlnum{20} \hlopt{||} \hlstd{X_star[i]} \hlopt{>} \hlnum{7}\hlstd{)}
+            \hlstd{X_star[i]} \hlkwb{=} \hlstd{X_star_old[i]}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{X_star} \hlstd{= X_star,} \hlkwc{R_} \hlstd{= R_,} \hlkwc{L} \hlstd{= L,} \hlkwc{b} \hlstd{= b,} \hlkwc{derivative} \hlstd{= double_deriv))}
+\hlstd{\}}
+\hlstd{main} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{Y}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{m}\hlstd{,} \hlkwc{n}\hlstd{) \{}
+    \hlstd{value} \hlkwb{=} \hlnum{TRUE}
+    \hlstd{count} \hlkwb{=} \hlnum{0}
+    \hlstd{p1} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p2} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p3} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlkwa{while} \hlstd{(value) \{}
+        \hlstd{k_old} \hlkwb{=} \hlstd{k}
+        \hlstd{k_new} \hlkwb{=} \hlkwd{my.scale.proposal}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{F} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{*} \hlstd{k}
+        \hlstd{k_new_posterior} \hlkwb{=} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k_new,} \hlnum{1.55}\hlstd{))} \hlopt{+} \hlkwd{logdensityX_k}\hlstd{(k_new,}
+            \hlstd{X, R, n)}
+        \hlstd{k_posterior} \hlkwb{=} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k,} \hlnum{1.55}\hlstd{))} \hlopt{+} \hlkwd{logdensityX_k}\hlstd{(k, X, R, n)}
+        \hlstd{logR} \hlkwb{=} \hlstd{k_new_posterior} \hlopt{-} \hlstd{k_posterior}
+        \hlstd{a} \hlkwb{=} \hlkwd{exp}\hlstd{(}\hlkwd{min}\hlstd{(}\hlnum{0}\hlstd{, logR))}
+        \hlkwa{if} \hlstd{(}\hlkwd{runif}\hlstd{(}\hlnum{1}\hlstd{)} \hlopt{<} \hlstd{a)}
+            \hlstd{k} \hlkwb{=} \hlstd{k_new}
+        \hlstd{gausianApprox} \hlkwb{=} \hlkwd{gausian_approx}\hlstd{(k, X, Y, m, n)}
+        \hlstd{X_old} \hlkwb{=} \hlstd{X}
+        \hlstd{X_new} \hlkwb{=} \hlstd{gausianApprox}\hlopt{$}\hlstd{X_star} \hlopt{+} \hlkwd{backsolve}\hlstd{(}\hlkwd{t}\hlstd{(gausianApprox}\hlopt{$}\hlstd{L),} \hlkwd{rnorm}\hlstd{(n))}
+        \hlcom{# density x_old}
+        \hlstd{X_oldDensity} \hlkwb{=} \hlkwd{logdensityX_k}\hlstd{(k, X_old, R, n)} \hlopt{+} \hlkwd{logDensityY_X}\hlstd{(X_old,}
+            \hlstd{Y, m)}
+        \hlcom{# density of x_old gaussian approximation}
+        \hlstd{gausianApprox_new} \hlkwb{=} \hlkwd{gausian_approx}\hlstd{(k, X_new, Y, m, n)}
+        \hlstd{X_old_Gausian} \hlkwb{=} \hlstd{(}\hlopt{-}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{((X_old} \hlopt{-} \hlstd{gausianApprox_new}\hlopt{$}\hlstd{X_star)} \hlopt{%*%}
+            \hlstd{(gausianApprox_new}\hlopt{$}\hlstd{R_)} \hlopt{%*%} \hlstd{(X_old} \hlopt{-} \hlstd{gausianApprox_new}\hlopt{$}\hlstd{X_star))}
+        \hlcom{# density x_new}
+        \hlstd{X_newDensity} \hlkwb{=} \hlkwd{logdensityX_k}\hlstd{(k, X_new, R, n)} \hlopt{+} \hlkwd{logDensityY_X}\hlstd{(X_new,}
+            \hlstd{Y, m)}
+        \hlcom{# density of x_new gausian approximation}
+        \hlstd{X_new_Gausian} \hlkwb{=} \hlstd{(}\hlopt{-}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{((X_new} \hlopt{-} \hlstd{gausianApprox}\hlopt{$}\hlstd{X_star)} \hlopt{%*%} \hlstd{(gausianApprox}\hlopt{$}\hlstd{R_)} \hlopt{%*%}
+            \hlstd{(X_new} \hlopt{-} \hlstd{gausianApprox}\hlopt{$}\hlstd{X_star))}
+        \hlstd{logR} \hlkwb{=} \hlstd{X_newDensity} \hlopt{-} \hlstd{X_oldDensity} \hlopt{+} \hlstd{X_old_Gausian} \hlopt{-} \hlstd{X_new_Gausian}
+        \hlstd{a} \hlkwb{=} \hlkwd{exp}\hlstd{(}\hlkwd{min}\hlstd{(}\hlnum{0}\hlstd{, logR))}
+        \hlkwa{if} \hlstd{(}\hlkwd{runif}\hlstd{(}\hlnum{1}\hlstd{)} \hlopt{<} \hlstd{a)}
+            \hlstd{X} \hlkwb{=} \hlstd{X_new}
+        \hlstd{p1} \hlkwb{=} \hlkwd{append}\hlstd{(p1, X[}\hlnum{130}\hlstd{])}
+        \hlstd{p2} \hlkwb{=} \hlkwd{append}\hlstd{(p2, X[}\hlnum{3}\hlstd{])}
+        \hlstd{p3} \hlkwb{=} \hlkwd{append}\hlstd{(p3, X[}\hlnum{300}\hlstd{])}
+        \hlstd{count} \hlkwb{=} \hlstd{count} \hlopt{+} \hlnum{1}
+        \hlkwa{if} \hlstd{(count} \hlopt{>=} \hlnum{100}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final} \hlopt{+} \hlstd{X}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final} \hlopt{+} \hlstd{k}
+        \hlstd{\}} \hlkwa{else} \hlstd{\{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k}
+        \hlstd{\}}
+        \hlkwa{if} \hlstd{(count} \hlopt{==} \hlnum{1000}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final}\hlopt{/}\hlnum{900}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final}\hlopt{/}\hlnum{900}
+            \hlkwa{break}
+        \hlstd{\}}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{x130} \hlstd{= p1,} \hlkwc{x3} \hlstd{= p2,} \hlkwc{x300} \hlstd{= p3,} \hlkwc{k} \hlstd{= k_final,} \hlkwc{X} \hlstd{= X_final))}
+\hlstd{\}}
+\hlstd{X} \hlkwb{=} \hlkwd{runif}\hlstd{(n,} \hlnum{1}\hlstd{,} \hlnum{3}\hlstd{)}
+\hlstd{k} \hlkwb{=} \hlnum{0.7}
+\hlstd{U} \hlkwb{=} \hlkwd{main}\hlstd{(k, X, Y, R, m, n)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Now, we can load and analyze our results.
+
+Let's start with the estimated probability of rainfall along the $365$ days, based on the estimated $x_i$, for $i \in \{1, 2, \cdots, 364, 365\}$, with a burn-in of size $100$ (out of $1,000$ observations).
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{load}\hlstd{(}\hlstr{"data/problem3.Rdata"}\hlstd{)}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{plot}\hlstd{(}\hlkwd{pnorm}\hlstd{(U}\hlopt{$}\hlstd{X),} \hlkwc{type} \hlstd{=} \hlstr{"l"}\hlstd{,} \hlkwc{ylim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{1}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlstr{"Days"}\hlstd{,} \hlkwc{ylab} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlkwd{p}\hlstd{(x[i])),}
+    \hlkwc{main} \hlstd{=} \hlstr{"Estimated underlying probability of rainfall #3"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-9-1} 
+
+}
+
+
+
+\end{knitrout}
+
+Now, let's take a look at three particular days, and plot the sample we have obtained from them.
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x3,} \hlnum{900}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{3}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{20}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{3}\hlstd{]} \hlopt{*} \hlstr{" (#3)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-10-1} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x130,} \hlnum{900}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{130}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{20}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{130}\hlstd{]} \hlopt{*} \hlstr{" (#3)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-10-2} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x300,} \hlnum{900}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{300}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{20}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{300}\hlstd{]} \hlopt{*} \hlstr{" (#3)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-10-3} 
+
+}
+
+
+
+\end{knitrout}
+
+For reference, the data set that we used to generate these plot is in \texttt{/data/problem3.RData}.
+
+\newpage
+
+\textbf{Part 4.}
+
+In this fourth part, we will update $\kappa_{\star}$ and $\boldsymbol{x}_{\star}$ jointly, which means that we will get some $\kappa_{\star} = \kappa^{(t+1)}_{\star} = a \cdot \kappa^{(t)}$, such that $a \sim \pi(a)$, and then compute $\pi_{\text{G}}(\boldsymbol{x}|\kappa_{\star}, y)$ as before. Once again, $\boldsymbol{x}_{\star} \sim \pi_{\text{G}}(\boldsymbol{x}|\kappa_{\star}, y)$. Finally, we can compute
+\begin{align*}
+\ln(R) =  \ln(\pi({\boldsymbol{x}}_{\star}, \kappa_{\star} | y)) +  \ln(\pi_{\text{G}}(\boldsymbol{x} | \boldsymbol{x}_{\star}, \kappa, y)) - \ln(\pi(\boldsymbol{x}, \kappa | y)) - \ln(\pi_{\text{G}}({\boldsymbol{x}}_{\star} | \boldsymbol{x}, \kappa_{\star}, y)),
+\end{align*}
+such that $\pi(\boldsymbol{x}, \kappa | y) \propto \pi(\kappa) \cdot \pi(\boldsymbol{x}|\kappa) \cdot \pi(y | \boldsymbol{x})$. With these small changes, we can implement a similar code to ``Parts 2. and 3.''.
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(numDeriv)}
+\hlstd{density_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{lambda}\hlstd{)} \hlkwd{return}\hlstd{(lambda} \hlopt{*} \hlkwd{exp}\hlstd{(}\hlopt{-}\hlstd{lambda}\hlopt{/}\hlkwd{sqrt}\hlstd{(k))} \hlopt{*} \hlstd{((k}\hlopt{^}\hlstd{(}\hlopt{-}\hlnum{3}\hlopt{/}\hlnum{2}\hlstd{))}\hlopt{/}\hlnum{2}\hlstd{))}
+\hlstd{logdensityX_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{n}\hlstd{)} \hlkwd{return}\hlstd{(}\hlnum{0.5} \hlopt{*} \hlstd{(((n} \hlopt{-} \hlnum{1}\hlstd{)} \hlopt{*} \hlkwd{log}\hlstd{(k))} \hlopt{-} \hlstd{k} \hlopt{*}
+    \hlstd{(X} \hlopt{%*%} \hlstd{(R)} \hlopt{%*%} \hlstd{X)))}
+\hlstd{a_values} \hlkwb{=} \hlkwd{seq}\hlstd{(}\hlkwc{from} \hlstd{=} \hlopt{-}\hlnum{39}\hlstd{,} \hlkwc{to} \hlstd{=} \hlnum{39}\hlstd{,} \hlkwc{by} \hlstd{=} \hlnum{0.1}\hlstd{)}
+\hlstd{density} \hlkwb{=} \hlkwd{dnorm}\hlstd{(a_values)}
+\hlstd{cumulative_density} \hlkwb{=} \hlkwd{cumsum}\hlstd{(density)}
+\hlstd{cumulative_density} \hlkwb{=} \hlstd{cumulative_density}\hlopt{/}\hlkwd{max}\hlstd{(cumulative_density)}
+\hlstd{normal_cdf} \hlkwb{=} \hlkwd{splinefun}\hlstd{(a_values, cumulative_density)}
+\hlstd{gX} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{,} \hlkwc{y}\hlstd{,} \hlkwc{mm}\hlstd{) \{}
+    \hlkwd{return}\hlstd{(y} \hlopt{*} \hlkwd{log}\hlstd{(}\hlkwd{normal_cdf}\hlstd{(x))} \hlopt{+} \hlstd{(mm} \hlopt{-} \hlstd{y)} \hlopt{*} \hlkwd{log}\hlstd{(}\hlnum{1} \hlopt{-} \hlkwd{normal_cdf}\hlstd{(x)))}
+\hlstd{\}}
+\hlstd{logDensityY_X} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{,} \hlkwc{y}\hlstd{,} \hlkwc{m}\hlstd{)} \hlkwd{return}\hlstd{(}\hlkwd{sum}\hlstd{(}\hlkwd{gX}\hlstd{(x, y, m)))}
+\hlstd{gausian_approx} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X_star}\hlstd{,} \hlkwc{Y}\hlstd{,} \hlkwc{m}\hlstd{,} \hlkwc{n}\hlstd{) \{}
+    \hlstd{single_deriv} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlnum{NA}\hlstd{, n)}
+    \hlstd{double_deriv} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlnum{NA}\hlstd{, n)}
+    \hlstd{X_star_old} \hlkwb{=} \hlstd{X_star}
+    \hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+        \hlstd{single_deriv[i]} \hlkwb{=} \hlkwd{grad}\hlstd{(gX,} \hlkwc{x} \hlstd{= X_star[i],} \hlkwc{y} \hlstd{= Y[i],} \hlkwc{mm} \hlstd{= m)}
+        \hlstd{double_deriv[i]} \hlkwb{=} \hlkwd{drop}\hlstd{(}\hlkwd{hessian}\hlstd{(gX,} \hlkwc{x} \hlstd{= X_star[i],} \hlkwc{y} \hlstd{= Y[i],} \hlkwc{mm} \hlstd{= m))}
+    \hlstd{\}}
+    \hlstd{double_deriv_matrix} \hlkwb{=} \hlkwd{diag}\hlstd{((}\hlopt{-}\hlnum{1}\hlstd{)} \hlopt{*} \hlstd{double_deriv)}
+    \hlstd{R_} \hlkwb{=} \hlstd{k} \hlopt{*} \hlstd{R} \hlopt{+} \hlstd{double_deriv_matrix}
+    \hlstd{b} \hlkwb{=} \hlstd{(single_deriv} \hlopt{-} \hlstd{(double_deriv} \hlopt{*} \hlstd{X_star))}
+    \hlstd{L} \hlkwb{=} \hlkwd{t}\hlstd{(}\hlkwd{chol}\hlstd{(R_))}
+    \hlstd{X_star} \hlkwb{=} \hlkwd{backsolve}\hlstd{(}\hlkwd{t}\hlstd{(L),} \hlkwd{forwardsolve}\hlstd{(L, b))}
+    \hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+        \hlkwa{if} \hlstd{(X_star[i]} \hlopt{< -}\hlnum{20} \hlopt{||} \hlstd{X_star[i]} \hlopt{>} \hlnum{7}\hlstd{)}
+            \hlstd{X_star[i]} \hlkwb{=} \hlstd{X_star_old[i]}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{X_star} \hlstd{= X_star,} \hlkwc{R_} \hlstd{= R_,} \hlkwc{L} \hlstd{= L,} \hlkwc{b} \hlstd{= b,} \hlkwc{derivative} \hlstd{= double_deriv))}
+\hlstd{\}}
+\hlstd{main} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{Y}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{m}\hlstd{,} \hlkwc{n}\hlstd{) \{}
+    \hlstd{value} \hlkwb{=} \hlnum{TRUE}
+    \hlstd{count} \hlkwb{=} \hlnum{0}
+    \hlstd{p1} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p2} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p3} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlkwa{while} \hlstd{(value) \{}
+        \hlstd{k_new} \hlkwb{=} \hlkwd{my.scale.proposal}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{F} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{*} \hlstd{k}
+        \hlstd{gausianApprox} \hlkwb{=} \hlkwd{gausian_approx}\hlstd{(k_new, X, Y, m, n)}
+        \hlstd{X_new} \hlkwb{=} \hlstd{gausianApprox}\hlopt{$}\hlstd{X_star} \hlopt{+} \hlkwd{backsolve}\hlstd{(}\hlkwd{t}\hlstd{(gausianApprox}\hlopt{$}\hlstd{L),} \hlkwd{rnorm}\hlstd{(n))}
+        \hlstd{Xk_oldDensity} \hlkwb{=} \hlkwd{logdensityX_k}\hlstd{(k, X, R, n)} \hlopt{+} \hlkwd{logDensityY_X}\hlstd{(X, Y, m)} \hlopt{+}
+            \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k,} \hlnum{1.55}\hlstd{))}
+        \hlstd{gausianApprox_new} \hlkwb{=} \hlkwd{gausian_approx}\hlstd{(k, X_new, Y, m, n)}
+        \hlstd{w} \hlkwb{=} \hlkwd{determinant}\hlstd{(gausianApprox_new}\hlopt{$}\hlstd{R_)}
+        \hlstd{X_old_Gausian} \hlkwb{=} \hlstd{(}\hlopt{-}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{((X} \hlopt{-} \hlstd{gausianApprox_new}\hlopt{$}\hlstd{X_star)} \hlopt{%*%} \hlstd{(gausianApprox_new}\hlopt{$}\hlstd{R_)} \hlopt{%*%}
+            \hlstd{(X} \hlopt{-} \hlstd{gausianApprox_new}\hlopt{$}\hlstd{X_star))} \hlopt{+} \hlstd{(}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{w}\hlopt{$}\hlstd{modulus}
+        \hlcom{# density x_new}
+        \hlstd{Xk_newDensity} \hlkwb{=} \hlkwd{logdensityX_k}\hlstd{(k_new, X_new, R, n)} \hlopt{+} \hlkwd{logDensityY_X}\hlstd{(X_new,}
+            \hlstd{Y, m)} \hlopt{+} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k_new,} \hlnum{1.55}\hlstd{))}
+        \hlcom{# density of x_new gausian approximation}
+        \hlstd{w} \hlkwb{=} \hlkwd{determinant}\hlstd{(gausianApprox}\hlopt{$}\hlstd{R_)}
+        \hlstd{X_new_Gausian} \hlkwb{=} \hlstd{(}\hlopt{-}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{((X_new} \hlopt{-} \hlstd{gausianApprox}\hlopt{$}\hlstd{X_star)} \hlopt{%*%} \hlstd{(gausianApprox}\hlopt{$}\hlstd{R_)} \hlopt{%*%}
+            \hlstd{(X_new} \hlopt{-} \hlstd{gausianApprox}\hlopt{$}\hlstd{X_star))} \hlopt{+} \hlstd{(}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{w}\hlopt{$}\hlstd{modulus}
+        \hlstd{logR} \hlkwb{=} \hlstd{Xk_newDensity} \hlopt{-} \hlstd{Xk_oldDensity} \hlopt{+} \hlstd{X_old_Gausian} \hlopt{-} \hlstd{X_new_Gausian}
+        \hlstd{a} \hlkwb{=} \hlkwd{exp}\hlstd{(}\hlkwd{min}\hlstd{(}\hlnum{0}\hlstd{, logR))}
+        \hlkwa{if} \hlstd{(}\hlkwd{runif}\hlstd{(}\hlnum{1}\hlstd{)} \hlopt{<} \hlstd{a) \{}
+            \hlstd{X} \hlkwb{=} \hlstd{X_new}
+            \hlstd{k} \hlkwb{=} \hlstd{k_new}
+        \hlstd{\}}
+        \hlstd{p1} \hlkwb{=} \hlkwd{append}\hlstd{(p1, X[}\hlnum{130}\hlstd{])}
+        \hlstd{p2} \hlkwb{=} \hlkwd{append}\hlstd{(p2, X[}\hlnum{3}\hlstd{])}
+        \hlstd{p3} \hlkwb{=} \hlkwd{append}\hlstd{(p3, X[}\hlnum{300}\hlstd{])}
+        \hlstd{count} \hlkwb{=} \hlstd{count} \hlopt{+} \hlnum{1}
+        \hlkwa{if} \hlstd{(count} \hlopt{>=} \hlnum{100}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final} \hlopt{+} \hlstd{X}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final} \hlopt{+} \hlstd{k}
+        \hlstd{\}} \hlkwa{else} \hlstd{\{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k}
+        \hlstd{\}}
+        \hlkwa{if} \hlstd{(count} \hlopt{==} \hlnum{1000}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final}\hlopt{/}\hlnum{900}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final}\hlopt{/}\hlnum{900}
+            \hlkwa{break}
+        \hlstd{\}}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{x130} \hlstd{= p1,} \hlkwc{x3} \hlstd{= p2,} \hlkwc{x300} \hlstd{= p3,} \hlkwc{k} \hlstd{= k_final,} \hlkwc{X} \hlstd{= X_final))}
+\hlstd{\}}
+\hlstd{X} \hlkwb{=} \hlkwd{runif}\hlstd{(n,} \hlnum{1}\hlstd{,} \hlnum{3}\hlstd{)}
+\hlstd{k} \hlkwb{=} \hlnum{0.7}
+\hlstd{U} \hlkwb{=} \hlkwd{main}\hlstd{(k, X, Y, R, m, n)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Now, we can load and analyze our results.
+
+Let's start with the estimated probability of rainfall along the $365$ days, based on the estimated $x_i$, for $i \in \{1, 2, \cdots, 364, 365\}$, with a burn-in of size $100$ (out of $1,000$ observations).
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{load}\hlstd{(}\hlstr{"data/problem4.Rdata"}\hlstd{)}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{plot}\hlstd{(}\hlkwd{pnorm}\hlstd{(U}\hlopt{$}\hlstd{X),} \hlkwc{type} \hlstd{=} \hlstr{"l"}\hlstd{,} \hlkwc{ylim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{1}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlstr{"Days"}\hlstd{,} \hlkwc{ylab} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlkwd{p}\hlstd{(x[i])),}
+    \hlkwc{main} \hlstd{=} \hlstr{"Estimated underlying probability of rainfall #4"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-12-1} 
+
+}
+
+
+
+\end{knitrout}
+
+Now, let's take a look at three particular days, and plot the sample we have obtained from them.
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x3,} \hlnum{900}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{3}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{20}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{3}\hlstd{]} \hlopt{*} \hlstr{" (#4)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-13-1} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x130,} \hlnum{900}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{130}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{20}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{130}\hlstd{]} \hlopt{*} \hlstr{" (#4)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-13-2} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x300,} \hlnum{900}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{300}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{20}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{300}\hlstd{]} \hlopt{*} \hlstr{" (#4)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-13-3} 
+
+}
+
+
+
+\end{knitrout}
+
+For reference, the data set that we used to generate these plot is in \texttt{/data/problem4.RData}.
+
+
+\newpage
+
+\textbf{Part 5.}
+This fifth part (and the next one) will use a slightly different approach if compared to what we have done so far. We will introduce some auxiliary random variables to fit the model. 
+
+Let $X_{i1}^{\prime}$ and $X_{i2}^{\prime}$ be two auxiliary variables, such that $X_{ij}^{\prime} = X_i + \epsilon_{ij}$, with $\epsilon_{ij} \sim \text{Normal}(0, 1)$. In this case, for $Y_i = Y_{i1} + Y_{i2}$, we have that
+\[ Y_{ij} = 
+    \begin{cases}
+      0 & \text{, if } X_{ij}^{\prime} \geq 0 \\
+      1 & \text{, if } X_{ij}^{\prime}    < 0
+    \end{cases}, \text{ for all } j \in \{1, 2\}.
+\]
+
+Assume for a moment that $y_{i1} = 1$ and $y_{i2} = 0$, then we will have that $\pi(x_{i1}^{\prime}, x_{i2}^{\prime} | x_i, y_{i1}, y_{i2}) \propto \exp\left[-\frac{1}{2}(x_{i1}^{\prime} - x_i)^2 - \frac{1}{2}(x_{i2}^{\prime} - x_i)^2 \cdot \mathbb{I}_{\{x_{i1}^{\prime} \geq 0\}} \cdot \mathbb{I}_{\{x_{i2}^{\prime} < 0\}}\right]$, where $\mathbb{I}_A$ is the indicator function for some set $A$; i.e., it is a Truncated Normal distribution. Therefore, notice that the previous distribution can be factorized into $\pi(x_{i1}^{\prime}|x_i, y_{i1}) \cdot \pi(x_{i2}^{\prime}|x_i, y_{i2})$.
+
+In this case, the $\kappa$ value will be updated in the same way as the previous parts. The \textit{spline} will be updated, for some accepted \textit{precision} value, following a Normal distribution, and the auxiliary variables will come from a Truncated Normal distribution, as we have just explained.
+
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(truncnorm)}
+\hlstd{Y1} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlnum{NA}\hlstd{, n)}
+\hlstd{Y2} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlnum{NA}\hlstd{, n)}
+\hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+    \hlkwa{if} \hlstd{(Y[i]} \hlopt{==} \hlnum{0}\hlstd{) \{}
+        \hlstd{Y1[i]} \hlkwb{=} \hlnum{0}
+        \hlstd{Y2[i]} \hlkwb{=} \hlnum{0}
+    \hlstd{\}} \hlkwa{else if} \hlstd{(Y[i]} \hlopt{==} \hlnum{1}\hlstd{) \{}
+        \hlstd{Y1[i]} \hlkwb{=} \hlnum{1}
+        \hlstd{Y2[i]} \hlkwb{=} \hlnum{0}
+    \hlstd{\}} \hlkwa{else} \hlstd{\{}
+        \hlstd{Y1[i]} \hlkwb{=} \hlnum{1}
+        \hlstd{Y2[i]} \hlkwb{=} \hlnum{1}
+    \hlstd{\}}
+\hlstd{\}}
+\hlstd{density_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{lambda}\hlstd{)} \hlkwd{return}\hlstd{(lambda} \hlopt{*} \hlkwd{exp}\hlstd{(}\hlopt{-}\hlstd{lambda}\hlopt{/}\hlkwd{sqrt}\hlstd{(k))} \hlopt{*} \hlstd{((k}\hlopt{^}\hlstd{(}\hlopt{-}\hlnum{3}\hlopt{/}\hlnum{2}\hlstd{))}\hlopt{/}\hlnum{2}\hlstd{))}
+\hlstd{logdensityEta_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{n}\hlstd{)} \hlkwd{return}\hlstd{(}\hlnum{0.5} \hlopt{*} \hlstd{(((n} \hlopt{-} \hlnum{1}\hlstd{)} \hlopt{*} \hlkwd{log}\hlstd{(k))} \hlopt{-}
+    \hlstd{k} \hlopt{*} \hlstd{(}\hlkwd{t}\hlstd{(X)} \hlopt{%*%} \hlstd{(R)} \hlopt{%*%} \hlstd{X)))}
+\hlstd{dist_eta} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{eta1}\hlstd{,} \hlkwc{eta2}\hlstd{,} \hlkwc{n}\hlstd{) \{}
+    \hlstd{I} \hlkwb{=} \hlkwd{diag}\hlstd{(}\hlnum{1}\hlstd{, n, n)}
+    \hlstd{Q} \hlkwb{=} \hlstd{k} \hlopt{*} \hlstd{R} \hlopt{+} \hlnum{2} \hlopt{*} \hlstd{I}
+    \hlstd{b} \hlkwb{=} \hlopt{-}\hlnum{2} \hlopt{*} \hlstd{(}\hlkwd{t}\hlstd{(eta1)} \hlopt{%*%} \hlstd{I} \hlopt{+} \hlkwd{t}\hlstd{(eta2)} \hlopt{%*%} \hlstd{I)}
+    \hlstd{L} \hlkwb{=} \hlkwd{t}\hlstd{(}\hlkwd{chol}\hlstd{(Q))}
+    \hlstd{mean} \hlkwb{=} \hlkwd{backsolve}\hlstd{(}\hlkwd{t}\hlstd{(L),} \hlkwd{forwardsolve}\hlstd{(L,} \hlkwd{t}\hlstd{(b)))}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{mean} \hlstd{= mean,} \hlkwc{L} \hlstd{= L))}
+\hlstd{\}}
+\hlstd{truncated_normal} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{eta}\hlstd{,} \hlkwc{Y1}\hlstd{,} \hlkwc{Y2}\hlstd{) \{}
+    \hlstd{eta1} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlnum{NA}\hlstd{, n)}
+    \hlstd{eta2} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlnum{NA}\hlstd{, n)}
+    \hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+        \hlkwa{if} \hlstd{(Y1[i]} \hlopt{==} \hlnum{1}\hlstd{)}
+            \hlstd{eta1[i]} \hlkwb{=} \hlkwd{rtruncnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{b} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{mean} \hlstd{= eta[i],} \hlkwc{sd} \hlstd{=} \hlnum{1}\hlstd{)}
+        \hlkwa{if} \hlstd{(Y1[i]} \hlopt{==} \hlnum{0}\hlstd{)}
+            \hlstd{eta1[i]} \hlkwb{=} \hlkwd{rtruncnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{a} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{mean} \hlstd{= eta[i],} \hlkwc{sd} \hlstd{=} \hlnum{1}\hlstd{)}
+        \hlkwa{if} \hlstd{(Y2[i]} \hlopt{==} \hlnum{1}\hlstd{)}
+            \hlstd{eta2[i]} \hlkwb{=} \hlkwd{rtruncnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{b} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{mean} \hlstd{= eta[i],} \hlkwc{sd} \hlstd{=} \hlnum{1}\hlstd{)}
+        \hlkwa{if} \hlstd{(Y2[i]} \hlopt{==} \hlnum{0}\hlstd{)}
+            \hlstd{eta2[i]} \hlkwb{=} \hlkwd{rtruncnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{a} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{mean} \hlstd{= eta[i],} \hlkwc{sd} \hlstd{=} \hlnum{1}\hlstd{)}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{eta1} \hlstd{= eta1,} \hlkwc{eta2} \hlstd{= eta2))}
+\hlstd{\}}
+\hlstd{main} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{eta}\hlstd{,} \hlkwc{Y1}\hlstd{,} \hlkwc{Y2}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{m}\hlstd{,} \hlkwc{n}\hlstd{,} \hlkwc{eta1}\hlstd{,} \hlkwc{eta2}\hlstd{) \{}
+    \hlstd{value} \hlkwb{=} \hlnum{TRUE}
+    \hlstd{count} \hlkwb{=} \hlnum{0}
+    \hlstd{p1} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p2} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p3} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlkwa{while} \hlstd{(value) \{}
+        \hlstd{k_new} \hlkwb{=} \hlkwd{my.scale.proposal}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{F} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{*} \hlstd{k}
+        \hlstd{k_old_density} \hlkwb{=} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k,} \hlnum{1.55}\hlstd{))} \hlopt{+} \hlkwd{logdensityEta_k}\hlstd{(k, eta,}
+            \hlstd{R, n)}
+        \hlstd{k_new_density} \hlkwb{=} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k_new,} \hlnum{1.55}\hlstd{))} \hlopt{+} \hlkwd{logdensityEta_k}\hlstd{(k_new,}
+            \hlstd{eta, R, n)}
+        \hlstd{logR} \hlkwb{=} \hlstd{k_new_density} \hlopt{-} \hlstd{k_old_density}
+        \hlstd{a} \hlkwb{=} \hlkwd{exp}\hlstd{(}\hlkwd{min}\hlstd{(}\hlnum{0}\hlstd{, logR))}
+        \hlkwa{if} \hlstd{(}\hlkwd{runif}\hlstd{(}\hlnum{1}\hlstd{)} \hlopt{<} \hlstd{a)}
+            \hlstd{k} \hlkwb{=} \hlstd{k_new}
+        \hlstd{distbn_eta} \hlkwb{=} \hlkwd{dist_eta}\hlstd{(k, R, eta1, eta2, n)}
+        \hlstd{eta} \hlkwb{=} \hlstd{distbn_eta}\hlopt{$}\hlstd{mean} \hlopt{+} \hlkwd{backsolve}\hlstd{(}\hlkwd{t}\hlstd{(distbn_eta}\hlopt{$}\hlstd{L),} \hlkwd{rnorm}\hlstd{(n))}
+        \hlstd{auxiliary_eta} \hlkwb{=} \hlkwd{truncated_normal}\hlstd{(eta, Y1, Y2)}
+        \hlstd{eta1} \hlkwb{=} \hlstd{auxiliary_eta}\hlopt{$}\hlstd{eta1}
+        \hlstd{eta2} \hlkwb{=} \hlstd{auxiliary_eta}\hlopt{$}\hlstd{eta2}
+        \hlstd{p1} \hlkwb{=} \hlkwd{append}\hlstd{(p1, eta[}\hlnum{130}\hlstd{])}
+        \hlstd{p2} \hlkwb{=} \hlkwd{append}\hlstd{(p2, eta[}\hlnum{3}\hlstd{])}
+        \hlstd{p3} \hlkwb{=} \hlkwd{append}\hlstd{(p3, eta[}\hlnum{300}\hlstd{])}
+        \hlstd{count} \hlkwb{=} \hlstd{count} \hlopt{+} \hlnum{1}
+        \hlkwa{if} \hlstd{(count} \hlopt{>=} \hlnum{300}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final} \hlopt{+} \hlstd{eta}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final} \hlopt{+} \hlstd{k}
+        \hlstd{\}} \hlkwa{else} \hlstd{\{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{eta}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k}
+        \hlstd{\}}
+        \hlkwa{if} \hlstd{(count} \hlopt{==} \hlnum{3000}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final}\hlopt{/}\hlnum{2700}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final}\hlopt{/}\hlnum{2700}
+            \hlkwa{break}
+        \hlstd{\}}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{x130} \hlstd{= p1,} \hlkwc{x3} \hlstd{= p2,} \hlkwc{x300} \hlstd{= p3,} \hlkwc{k} \hlstd{= k_final,} \hlkwc{X} \hlstd{= X_final))}
+\hlstd{\}}
+\hlstd{eta} \hlkwb{=} \hlkwd{runif}\hlstd{(n,} \hlnum{1}\hlstd{,} \hlnum{3}\hlstd{)}
+\hlstd{eta1} \hlkwb{=} \hlstd{eta} \hlopt{+} \hlkwd{rnorm}\hlstd{(n)}
+\hlstd{eta2} \hlkwb{=} \hlstd{eta} \hlopt{+} \hlkwd{rnorm}\hlstd{(n)}
+\hlstd{k} \hlkwb{=} \hlnum{3}
+\hlstd{U} \hlkwb{=} \hlkwd{main}\hlstd{(k, eta, Y1, Y2, R, m, n, eta1, eta2)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+Now, we can load and analyze our results.
+
+Let's start with the estimated probability of rainfall along the $365$ days, based on the estimated $x_i$, for $i \in \{1, 2, \cdots, 364, 365\}$, with a burn-in of size $300$ (out of $3,000$ observations).
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{load}\hlstd{(}\hlstr{"data/problem5.Rdata"}\hlstd{)}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{plot}\hlstd{(}\hlkwd{pnorm}\hlstd{(U}\hlopt{$}\hlstd{X),} \hlkwc{type} \hlstd{=} \hlstr{"l"}\hlstd{,} \hlkwc{ylim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{1}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlstr{"Days"}\hlstd{,} \hlkwc{ylab} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlkwd{p}\hlstd{(x[i])),}
+    \hlkwc{main} \hlstd{=} \hlstr{"Estimated underlying probability of rainfall #5"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-15-1} 
+
+}
+
+
+
+\end{knitrout}
+
+Now, let's take a look at three particular days, and plot the sample we have obtained from them.
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x3,} \hlnum{2700}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{3}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{50}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{3}\hlstd{]} \hlopt{*} \hlstr{" (#5)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-16-1} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x130,} \hlnum{2700}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{130}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{50}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{130}\hlstd{]} \hlopt{*} \hlstr{" (#5)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-16-2} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x300,} \hlnum{2700}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{300}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{50}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{300}\hlstd{]} \hlopt{*} \hlstr{" (#5)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-16-3} 
+
+}
+
+
+
+\end{knitrout}
+
+For reference, the data set that we used to generate these plot is in \texttt{/data/problem5.RData}.
+
+\newpage
+
+\textbf{Part 6.}
+For this final sampler, we want to do something similar to ``Part 4'', except that we will update it in two blocks: the precision and the spline jointly, and the auxiliary variables. To do so, notice that, we want to compute
+\begin{align*}
+\pi(x, \kappa| x_1^{\prime}, x_2^{\prime}, y) &\propto \pi(x, \kappa, x_1^{\prime}, x_2^{\prime}, y) \\
+& = \pi(y|x_1^{\prime}, x_2^{\prime}) \cdot \pi(x_1^{\prime}, x_2^{\prime}| x) \cdot \pi(x| \kappa) \cdot \pi(\kappa) = h(\kappa, x).
+\end{align*}
+
+In this case, we will accept $\kappa_{\star}$ and $x_{\star}$ with a probability $\alpha = \exp(\min\{0, \ln(R)\})$, such that 
+\begin{align*}
+\ln(R) = \ln(h(\kappa_{\star}, x_{\star})) + \ln(\pi(x | \kappa, x^{\prime})) - \ln(h(\kappa, x)) - \ln(\pi(x_{\star}|\kappa_{\star}, x^{\prime})). 
+\end{align*}
+
+Furthermore, the new ${x_1^{\prime}}_{\star}$ and ${x_2^{\prime}}_{\star}$ will be sample from the Truncated Normal distribution, as before.
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(mvtnorm)}
+\hlkwd{library}\hlstd{(truncnorm)}
+\hlstd{density_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{lambda}\hlstd{)} \hlkwd{return}\hlstd{(lambda} \hlopt{*} \hlkwd{exp}\hlstd{(}\hlopt{-}\hlstd{lambda}\hlopt{/}\hlkwd{sqrt}\hlstd{(k))} \hlopt{*} \hlstd{((k}\hlopt{^}\hlstd{(}\hlopt{-}\hlnum{3}\hlopt{/}\hlnum{2}\hlstd{))}\hlopt{/}\hlnum{2}\hlstd{))}
+\hlstd{logdensityEta_k} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{X}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{n}\hlstd{)} \hlkwd{return}\hlstd{(}\hlnum{0.5} \hlopt{*} \hlstd{(((n} \hlopt{-} \hlnum{1}\hlstd{)} \hlopt{*} \hlkwd{log}\hlstd{(k))} \hlopt{-}
+    \hlstd{k} \hlopt{*} \hlstd{(X} \hlopt{%*%} \hlstd{(R)} \hlopt{%*%} \hlstd{X)))}
+\hlstd{dist_eta} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{eta1}\hlstd{,} \hlkwc{eta2}\hlstd{,} \hlkwc{n}\hlstd{) \{}
+    \hlstd{I} \hlkwb{=} \hlkwd{diag}\hlstd{(}\hlnum{1}\hlstd{, n, n)}
+    \hlstd{Q} \hlkwb{=} \hlstd{k} \hlopt{*} \hlstd{R} \hlopt{+} \hlnum{2} \hlopt{*} \hlstd{I}
+    \hlstd{b} \hlkwb{=} \hlopt{-}\hlstd{(eta1} \hlopt{+} \hlstd{eta2)}
+    \hlstd{L} \hlkwb{=} \hlkwd{t}\hlstd{(}\hlkwd{chol}\hlstd{(Q))}
+    \hlstd{mean} \hlkwb{=} \hlkwd{backsolve}\hlstd{(}\hlkwd{t}\hlstd{(L),} \hlkwd{forwardsolve}\hlstd{(L, b))}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{mean} \hlstd{= mean,} \hlkwc{L} \hlstd{= L,} \hlkwc{Q} \hlstd{= Q))}
+\hlstd{\}}
+\hlstd{truncated_normal} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{eta}\hlstd{,} \hlkwc{Y1}\hlstd{,} \hlkwc{Y2}\hlstd{) \{}
+    \hlstd{eta1} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlnum{NA}\hlstd{, n)}
+    \hlstd{eta2} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlnum{NA}\hlstd{, n)}
+    \hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlstd{n) \{}
+        \hlkwa{if} \hlstd{(Y1[i]} \hlopt{==} \hlnum{1}\hlstd{)}
+            \hlstd{eta1[i]} \hlkwb{=} \hlkwd{rtruncnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{b} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{mean} \hlstd{= eta[i],} \hlkwc{sd} \hlstd{=} \hlnum{1}\hlstd{)}
+        \hlkwa{if} \hlstd{(Y1[i]} \hlopt{==} \hlnum{0}\hlstd{)}
+            \hlstd{eta1[i]} \hlkwb{=} \hlkwd{rtruncnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{a} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{mean} \hlstd{= eta[i],} \hlkwc{sd} \hlstd{=} \hlnum{1}\hlstd{)}
+        \hlkwa{if} \hlstd{(Y2[i]} \hlopt{==} \hlnum{1}\hlstd{)}
+            \hlstd{eta2[i]} \hlkwb{=} \hlkwd{rtruncnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{b} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{mean} \hlstd{= eta[i],} \hlkwc{sd} \hlstd{=} \hlnum{1}\hlstd{)}
+        \hlkwa{if} \hlstd{(Y2[i]} \hlopt{==} \hlnum{0}\hlstd{)}
+            \hlstd{eta2[i]} \hlkwb{=} \hlkwd{rtruncnorm}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{a} \hlstd{=} \hlnum{0}\hlstd{,} \hlkwc{mean} \hlstd{= eta[i],} \hlkwc{sd} \hlstd{=} \hlnum{1}\hlstd{)}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{eta1} \hlstd{= eta1,} \hlkwc{eta2} \hlstd{= eta2))}
+\hlstd{\}}
+\hlstd{main} \hlkwb{=} \hlkwa{function}\hlstd{(}\hlkwc{k}\hlstd{,} \hlkwc{eta}\hlstd{,} \hlkwc{Y1}\hlstd{,} \hlkwc{Y2}\hlstd{,} \hlkwc{R}\hlstd{,} \hlkwc{m}\hlstd{,} \hlkwc{n}\hlstd{,} \hlkwc{eta1}\hlstd{,} \hlkwc{eta2}\hlstd{) \{}
+    \hlstd{value} \hlkwb{=} \hlnum{TRUE}
+    \hlstd{count} \hlkwb{=} \hlnum{0}
+    \hlstd{I} \hlkwb{=} \hlkwd{diag}\hlstd{(}\hlnum{1}\hlstd{, n, n)}
+    \hlstd{p1} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p2} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlstd{p3} \hlkwb{=} \hlkwd{c}\hlstd{()}
+    \hlkwa{while} \hlstd{(value) \{}
+        \hlstd{k_new} \hlkwb{=} \hlkwd{my.scale.proposal}\hlstd{(}\hlnum{1}\hlstd{,} \hlkwc{F} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{*} \hlstd{k}
+        \hlstd{distbn_eta_new} \hlkwb{=} \hlkwd{dist_eta}\hlstd{(k_new, R, eta1, eta2, n)}
+        \hlstd{eta_new} \hlkwb{=} \hlstd{distbn_eta_new}\hlopt{$}\hlstd{mean} \hlopt{+} \hlkwd{backsolve}\hlstd{(}\hlkwd{t}\hlstd{(distbn_eta_new}\hlopt{$}\hlstd{L),} \hlkwd{rnorm}\hlstd{(n))}
+        \hlstd{etak_old_density} \hlkwb{=} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k,} \hlnum{1.55}\hlstd{))} \hlopt{+} \hlkwd{logdensityEta_k}\hlstd{(k, eta,}
+            \hlstd{R, n)} \hlopt{-} \hlnum{0.5} \hlopt{*} \hlstd{((}\hlkwd{sum}\hlstd{((eta1} \hlopt{-} \hlstd{eta)}\hlopt{^}\hlnum{2}\hlstd{)} \hlopt{+} \hlkwd{sum}\hlstd{((eta2} \hlopt{-} \hlstd{eta)}\hlopt{^}\hlnum{2}\hlstd{)))}
+        \hlstd{etak_new_density} \hlkwb{=} \hlkwd{log}\hlstd{(}\hlkwd{density_k}\hlstd{(k_new,} \hlnum{1.55}\hlstd{))} \hlopt{+} \hlkwd{logdensityEta_k}\hlstd{(k_new,}
+            \hlstd{eta_new, R, n)} \hlopt{-} \hlnum{0.5} \hlopt{*} \hlstd{(}\hlkwd{sum}\hlstd{((eta1} \hlopt{-} \hlstd{eta_new)}\hlopt{^}\hlnum{2}\hlstd{)} \hlopt{+} \hlkwd{sum}\hlstd{((eta2} \hlopt{-}
+            \hlstd{eta_new)}\hlopt{^}\hlnum{2}\hlstd{))}
+        \hlstd{distbn_eta_old} \hlkwb{=} \hlkwd{dist_eta}\hlstd{(k, R, eta1, eta2, n)}
+        \hlstd{w1} \hlkwb{=} \hlkwd{determinant}\hlstd{(distbn_eta_old}\hlopt{$}\hlstd{Q)}
+        \hlstd{proposal_old} \hlkwb{=} \hlstd{(}\hlopt{-}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{((eta} \hlopt{-} \hlstd{distbn_eta_old}\hlopt{$}\hlstd{mean)} \hlopt{%*%} \hlstd{(distbn_eta_old}\hlopt{$}\hlstd{Q)} \hlopt{%*%}
+            \hlstd{(eta} \hlopt{-} \hlstd{distbn_eta_old}\hlopt{$}\hlstd{mean))} \hlopt{+} \hlstd{(}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{w1}\hlopt{$}\hlstd{modulus}
+        \hlstd{w2} \hlkwb{=} \hlkwd{determinant}\hlstd{(distbn_eta_new}\hlopt{$}\hlstd{Q)}
+        \hlstd{proposal_new} \hlkwb{=} \hlstd{(}\hlopt{-}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{((eta_new} \hlopt{-} \hlstd{distbn_eta_new}\hlopt{$}\hlstd{mean)} \hlopt{%*%} \hlstd{(distbn_eta_new}\hlopt{$}\hlstd{Q)} \hlopt{%*%}
+            \hlstd{(eta_new} \hlopt{-} \hlstd{distbn_eta_new}\hlopt{$}\hlstd{mean))} \hlopt{+} \hlstd{(}\hlnum{0.5}\hlstd{)} \hlopt{*} \hlstd{w2}\hlopt{$}\hlstd{modulus}
+        \hlstd{logR} \hlkwb{=} \hlstd{etak_new_density} \hlopt{-} \hlstd{etak_old_density} \hlopt{+} \hlstd{proposal_old} \hlopt{-} \hlstd{proposal_new}
+        \hlstd{a} \hlkwb{=} \hlkwd{exp}\hlstd{(}\hlkwd{min}\hlstd{(}\hlnum{0}\hlstd{, logR))}
+        \hlkwa{if} \hlstd{(}\hlkwd{runif}\hlstd{(}\hlnum{1}\hlstd{)} \hlopt{<} \hlstd{a) \{}
+            \hlstd{k} \hlkwb{=} \hlstd{k_new}
+            \hlstd{eta} \hlkwb{=} \hlstd{eta_new}
+        \hlstd{\}}
+        \hlstd{auxiliary_eta} \hlkwb{=} \hlkwd{truncated_normal}\hlstd{(eta, Y1, Y2)}
+        \hlstd{eta1} \hlkwb{=} \hlstd{auxiliary_eta}\hlopt{$}\hlstd{eta1}
+        \hlstd{eta2} \hlkwb{=} \hlstd{auxiliary_eta}\hlopt{$}\hlstd{eta2}
+        \hlstd{p1} \hlkwb{=} \hlkwd{append}\hlstd{(p1, eta[}\hlnum{130}\hlstd{])}
+        \hlstd{p2} \hlkwb{=} \hlkwd{append}\hlstd{(p2, eta[}\hlnum{3}\hlstd{])}
+        \hlstd{p3} \hlkwb{=} \hlkwd{append}\hlstd{(p3, eta[}\hlnum{300}\hlstd{])}
+        \hlstd{count} \hlkwb{=} \hlstd{count} \hlopt{+} \hlnum{1}
+        \hlkwa{if} \hlstd{(count} \hlopt{>=} \hlnum{300}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final} \hlopt{+} \hlstd{eta}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final} \hlopt{+} \hlstd{k}
+        \hlstd{\}} \hlkwa{else} \hlstd{\{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{eta}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k}
+        \hlstd{\}}
+        \hlkwa{if} \hlstd{(count} \hlopt{==} \hlnum{3000}\hlstd{) \{}
+            \hlstd{X_final} \hlkwb{=} \hlstd{X_final}\hlopt{/}\hlnum{2700}
+            \hlstd{k_final} \hlkwb{=} \hlstd{k_final}\hlopt{/}\hlnum{2700}
+            \hlkwa{break}
+        \hlstd{\}}
+    \hlstd{\}}
+    \hlkwd{return}\hlstd{(}\hlkwd{list}\hlstd{(}\hlkwc{x130} \hlstd{= p1,} \hlkwc{x3} \hlstd{= p2,} \hlkwc{x300} \hlstd{= p3,} \hlkwc{k} \hlstd{= k_final,} \hlkwc{X} \hlstd{= X_final))}
+\hlstd{\}}
+\hlstd{eta} \hlkwb{=} \hlkwd{runif}\hlstd{(n,} \hlnum{1}\hlstd{,} \hlnum{3}\hlstd{)}
+\hlstd{eta1} \hlkwb{=} \hlstd{eta} \hlopt{+} \hlkwd{rnorm}\hlstd{(n)}
+\hlstd{eta2} \hlkwb{=} \hlstd{eta} \hlopt{+} \hlkwd{rnorm}\hlstd{(n)}
+\hlstd{k} \hlkwb{=} \hlnum{4}
+\hlstd{U} \hlkwb{=} \hlkwd{main}\hlstd{(k, eta, Y1, Y2, R, m, n, eta1, eta2)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+Now, we can load and analyze our results.
+
+Let's start with the estimated probability of rainfall along the $365$ days, based on the estimated $x_i$, for $i \in \{1, 2, \cdots, 364, 365\}$, with a burn-in of size $300$ (out of $3,000$ observations).
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{load}\hlstd{(}\hlstr{"data/problem6.Rdata"}\hlstd{)}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{plot}\hlstd{(}\hlkwd{pnorm}\hlstd{(U}\hlopt{$}\hlstd{X),} \hlkwc{type} \hlstd{=} \hlstr{"l"}\hlstd{,} \hlkwc{ylim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{1}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlstr{"Days"}\hlstd{,} \hlkwc{ylab} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlkwd{p}\hlstd{(x[i])),}
+    \hlkwc{main} \hlstd{=} \hlstr{"Estimated underlying probability of rainfall #6"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-18-1} 
+
+}
+
+
+
+\end{knitrout}
+
+Now, let's take a look at three particular days, and plot the sample we have obtained from them.
+
+\begin{knitrout}\small
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{par}\hlstd{(}\hlkwc{mar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{4.1}\hlstd{,} \hlnum{4.1}\hlstd{,} \hlnum{2.4}\hlstd{,} \hlnum{2.1}\hlstd{),} \hlkwc{cex} \hlstd{=} \hlnum{0.875}\hlstd{)}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x3,} \hlnum{2700}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{3}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{50}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{3}\hlstd{]} \hlopt{*} \hlstr{" (#6)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-19-1} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x130,} \hlnum{2700}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{130}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{50}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{130}\hlstd{]} \hlopt{*} \hlstr{" (#6)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-19-2} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{hist}\hlstd{(}\hlkwd{tail}\hlstd{(U}\hlopt{$}\hlstd{x300,} \hlnum{2700}\hlstd{),} \hlkwc{xlab} \hlstd{=} \hlkwd{expression}\hlstd{(x[}\hlnum{300}\hlstd{]),} \hlkwc{ylab} \hlstd{=} \hlstr{"Absolute Frequency"}\hlstd{,}
+    \hlkwc{breaks} \hlstd{=} \hlnum{50}\hlstd{,} \hlkwc{main} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlstr{"Histogram for "} \hlopt{*} \hlstd{x[}\hlnum{300}\hlstd{]} \hlopt{*} \hlstr{" (#6)"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/unnamed-chunk-19-3} 
+
+}
+
+
+
+\end{knitrout}
+
+For reference, the data set that we used to generate these plot is in \texttt{/data/problem6.RData}.
+
+\end{document}
